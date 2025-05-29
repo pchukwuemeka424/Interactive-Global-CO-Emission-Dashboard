@@ -1,0 +1,53 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+
+# Load Data
+@st.cache_data
+def load_data():
+    df = pd.read_csv('data/synthetic_co2_emissions.csv')
+    return df
+
+df = load_data()
+
+# Sidebar filters
+st.sidebar.header("Filter Options")
+year_range = st.sidebar.slider("Select Year Range", int(df.Year.min()), int(df.Year.max()), (2000, 2024))
+continents = st.sidebar.multiselect("Select Continents", options=df["Continent"].unique(), default=df["Continent"].unique())
+countries = st.sidebar.multiselect("Select Countries", options=df["Country"].unique(), default=df["Country"].unique())
+
+# Filter Data
+filtered_df = df[(df["Year"].between(year_range[0], year_range[1])) &
+                 (df["Continent"].isin(continents)) &
+                 (df["Country"].isin(countries))]
+
+# Dashboard Title
+st.title("🌍 Interactive Global CO₂ Emission Dashboard")
+st.markdown("Explore trends in global carbon dioxide emissions across countries and continents using synthetic data.")
+
+# KPI Cards
+total_emissions = filtered_df["CO2_Emissions_Mt"].sum()
+avg_emission = filtered_df.groupby("Year")["CO2_Emissions_Mt"].sum().mean()
+top_emitter = filtered_df.groupby("Country")["CO2_Emissions_Mt"].sum().idxmax()
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Total Emissions (Mt)", f"{total_emissions:,.0f}")
+col2.metric("Average Annual Emission (Mt)", f"{avg_emission:,.0f}")
+col3.metric("Top Emitting Country", top_emitter)
+
+# Line Chart: Emissions over Time
+line_data = filtered_df.groupby(["Year", "Country"])["CO2_Emissions_Mt"].sum().reset_index()
+fig_line = px.line(line_data, x="Year", y="CO2_Emissions_Mt", color="Country", title="Annual CO₂ Emissions by Country")
+st.plotly_chart(fig_line, use_container_width=True)
+
+# Bar Chart: Emissions by Continent
+continent_data = filtered_df.groupby("Continent")["CO2_Emissions_Mt"].sum().reset_index()
+fig_bar = px.bar(continent_data, x="Continent", y="CO2_Emissions_Mt", color="Continent", title="Total CO₂ Emissions by Continent")
+st.plotly_chart(fig_bar, use_container_width=True)
+
+# Download Button
+st.download_button("📥 Download Filtered Data as CSV", data=filtered_df.to_csv(index=False), file_name="filtered_co2_data.csv")
+
+# Footer
+st.markdown("---")
+st.caption("© 2025 Interactive Global CO₂ Dashboard — Synthetic Dataset | Created with Streamlit and Plotly")
