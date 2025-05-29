@@ -1,0 +1,20 @@
+# Save this script separately to generate your CSV file if needed
+import pandas as pd
+import numpy as np
+
+np.random.seed(42)
+years = list(range(1990, 2025))
+countries = ['USA', 'China', 'India', 'Germany', 'Brazil', 'Nigeria', 'Canada', 'Australia', 'UK', 'Russia']
+continents = {
+    'USA': 'North America', 'China': 'Asia', 'India': 'Asia', 'Germany': 'Europe', 'Brazil': 'South America',
+    'Nigeria': 'Africa', 'Canada': 'North America', 'Australia': 'Oceania', 'UK': 'Europe', 'Russia': 'Europe'
+}
+
+data = []
+for country in countries:
+    for year in years:
+        co2 = np.random.normal(loc=500, scale=100)
+        data.append([year, country, continents[country], max(co2, 50)])
+
+df = pd.DataFrame(data, columns=['Year', 'Country', 'Continent', 'CO2_Emissions_Mt'])
+df.to_csv('data/synthetic_co2_emissions.csv', index=False)
